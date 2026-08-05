@@ -36,6 +36,14 @@ func getAllowedOrigin() string {
 	return "*"
 }
 
+//writeJSONError centraliza a resposta de erro: garante Content-Type application/json
+//antes do status (senão o cliente recebe o JSON marcado como text/plain).
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
 func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	//devolve o handler de verdade que substitui "next" nas rotas
 	return func(w http.ResponseWriter, r *http.Request) {

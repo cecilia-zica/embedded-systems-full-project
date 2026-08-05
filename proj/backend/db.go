@@ -20,11 +20,18 @@ func initDB() {
 		dbPath = "./app.db" //fallback pra rodar local, fora do Docker
 	}
 
-	db, err = sql.Open("sqlite", dbPath) //abre a conexão
+	//WAL + busy_timeout evitam "database is locked" quando o ESP32 grava
+	//(POST /logging a cada ~5s) enquanto o app lê/apaga ao mesmo tempo.
+	dsn := dbPath + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
+	db, err = sql.Open("sqlite", dsn) //abre a conexão
 
 	if err != nil {
 		log.Fatal(err) //lança erro e encerra com 1
 	}
+
+	//SQLite só aceita 1 escritor por vez; serializar as conexões troca erros
+	//de lock por uma pequena espera, previsível e segura pra esta escala.
+	db.SetMaxOpenConns(1)
 
 	//teste com db.Ping()
 	err = db.Ping() //verifica se a conexão está ativa, boa prática

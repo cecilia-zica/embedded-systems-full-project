@@ -21,8 +21,7 @@ func handleGetControle(w http.ResponseWriter, r *http.Request) {
 	err := db.QueryRow(`SELECT bpm_threshold, alert_enabled FROM config WHERE id = 1`).
 		Scan(&cfg.BPMThreshold, &alertEnabledInt)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "erro ao ler config"})
+		writeJSONError(w, http.StatusInternalServerError, "erro ao ler config")
 		return
 	}
 	cfg.AlertEnabled = alertEnabledInt == 1 //SQLite não tem bool, guarda como 0/1
@@ -36,16 +35,17 @@ func handleGetControle(w http.ResponseWriter, r *http.Request) {
 func handlePostControle(w http.ResponseWriter, r *http.Request) {
 	var req Config
 
+	//limita o body a 1 MB (mesmo motivo do handlePostLogging)
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	//Decode: JSON -> struct/map Go (lê o que o cliente mandou no body)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "body inválido"})
+		writeJSONError(w, http.StatusBadRequest, "body inválido")
 		return
 	}
 
 	if req.BPMThreshold <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "bpm_threshold deve ser maior que 0"})
+		writeJSONError(w, http.StatusBadRequest, "bpm_threshold deve ser maior que 0")
 		return
 	}
 
@@ -59,8 +59,7 @@ func handlePostControle(w http.ResponseWriter, r *http.Request) {
 		req.BPMThreshold, alertEnabledInt,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "erro ao salvar config"})
+		writeJSONError(w, http.StatusInternalServerError, "erro ao salvar config")
 		return
 	}
 

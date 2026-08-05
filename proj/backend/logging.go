@@ -20,6 +20,9 @@ type LogEntry struct {
 func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 	var l LogEntry
 
+	//limita o body a 1 MB: evita que um cliente esgote memória com um POST gigante
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	//Decode: JSON -> struct (lê a leitura que o ESP32 mandou no body)
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
 		http.Error(w, "body inválido", http.StatusBadRequest)
