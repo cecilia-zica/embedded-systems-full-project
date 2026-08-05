@@ -1,0 +1,42 @@
+/* Classes utilitárias de status — a UI nunca escolhe cor por conta própria,
+   só aplica uma dessas 3 classes conforme classToStatus() (ver utils/format.js).
+   Trocar o tom de "alerta" pro app inteiro é editar 1 linha aqui, não caçar
+   cada lugar que desenhava laranja na mão. */
+
+.status-normal {
+  color: var(--status-normal-fg);
+  background: var(--status-normal-bg);
+}
+.status-alert {
+  color: var(--status-alert-fg);
+  background: var(--status-alert-bg);
+}
+.status-error {
+  color: var(--status-error-fg);
+  background: var(--status-error-bg);
+}
+
+/* variante "só a cor do ícone/texto, sem fundo" — usada no avatar do log */
+.status-normal-fg {
+  color: var(--status-normal-fg);
+}
+.status-alert-fg {
+  color: var(--status-alert-fg);
+}
+.status-error-fg {
+  color: var(--status-error-fg);
+}
+
+/* pontinhos coloridos da legenda do LED (LedLegend) */
+.dot-muted {
+  background: var(--status-muted-fg);
+}
+.dot-normal {
+  background: var(--status-normal-fg);
+}
+.dot-alert {
+  background: var(--status-alert-fg);
+}
+.dot-error {
+  background: var(--status-error-fg);
+}

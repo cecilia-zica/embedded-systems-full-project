@@ -1,0 +1,48 @@
+/* Design tokens — a "fonte da verdade" de cores/espaçamentos/tipografia.
+   Nenhum componente deveria escrever um hex (#16233f) direto no meio do
+   CSS; em vez disso, usa var(--color-navy). A vantagem prática: pra ver
+   toda a identidade visual do app, você olha só este arquivo — não precisa
+   caçar cor por cor espalhada em 8 arquivos diferentes.
+
+   Paleta: navy + dourado, tema CLARO — o par da versão Scala.js, que usa a
+   mesma paleta só que no tema ESCURO (ver proj/frontend-scala/styles.css).
+   Fundo em creme (não branco puro) e dourado usado com moderação, só em
+   acentos/ícones/estados ativos — texto e botões primários usam navy, que
+   tem contraste melhor em fundo claro do que dourado teria. */
+
+:root {
+  /* --- superfícies --- */
+  --color-bg: #f6f4ee;
+  --color-surface: #ffffff;
+  --color-border: #e6e1d2;
+
+  /* --- texto --- */
+  --color-text: #16233f;
+  --color-text-muted: #62708c;
+
+  /* --- marca: navy (ação primária) + dourado (acento) --- */
+  --color-navy: #16233f;
+  --color-navy-strong: #0d1730;
+  --color-gold: #ab7d1f;
+  --color-gold-soft: rgba(171, 125, 31, 0.12);
+
+  /* --- status semântico (usado por theme/status.css) --- */
+  --status-muted-fg: #94a3b8;
+  --status-normal-fg: #166534;
+  --status-normal-bg: rgba(22, 101, 52, 0.1);
+  --status-alert-fg: #b45309;
+  --status-alert-bg: rgba(180, 83, 9, 0.1);
+  --status-error-fg: #b91c1c;
+  --status-error-bg: rgba(185, 28, 28, 0.1);
+
+  /* --- tipografia: serifada nos títulos (toque "elegante"), sans no
+     corpo (legibilidade). Só fontes de sistema — sem depender de internet
+     pra carregar Google Fonts. --- */
+  --font-heading: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* --- forma --- */
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --shadow-card: 0 1px 2px rgba(22, 35, 63, 0.06), 0 8px 24px -12px rgba(22, 35, 63, 0.12);
+}

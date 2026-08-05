@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>Monitor Cardíaco — React</title>
+  </head>
+  <body>
+    <!-- Igual ao <div id="root"> do proj/web, e igual ao runApp() do Flutter:
+         é o "furo" no HTML onde a árvore de componentes React vai ser montada. -->
+    <div id="root"></div>
+
+    <!-- Aqui é a diferença chave pro proj/web: em vez de <script src="app.js">
+         puro, apontamos pro main.jsx e deixamos o Vite processar tudo (JSX,
+         imports de outros arquivos, CSS) — é o mesmo papel do pubspec.yaml +
+         `flutter run` no mundo Flutter. Em dev o Vite serve isso ao vivo com
+         hot-reload; em build (`npm run build`) ele gera JS/CSS finais. -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

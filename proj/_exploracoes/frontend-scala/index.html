@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>Monitor Cardíaco — Scala.js</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Igual ao <div id="root"> das versões React, e ao runApp() do
+         Flutter: é o "furo" no HTML onde o Laminar vai montar a árvore de
+         elementos (ver renderOnDomContentLoaded em Main.scala). -->
+    <div id="app"></div>
+
+    <!-- Config do app — equivalente ao .env da versão React. Scala.js aqui
+         não passa por nenhum bundler (sem Vite/Webpack), então não existe
+         "import.meta.env"; o jeito de injetar configuração por ambiente é
+         definir isso ANTES do main.js carregar, e o Env.scala (em
+         src/main/scala/monitor/api/Env.scala) só lê esse objeto global. -->
+    <script>
+      window.__CONFIG__ = {
+        apiBaseUrl: 'http://172.20.10.2:8080',
+        apiKey: 'zica123',
+      };
+    </script>
+
+    <!-- Sem Vite/Webpack aqui: `sbt fastLinkJS` gera um .js "normal" (sem
+         módulos ES), então um <script src="..."> comum já basta — nada de
+         type="module" nem bundler. O caminho abaixo é onde o sbt-scalajs
+         escreve o arquivo por padrão; se a versão do Scala mudar no
+         build.sbt, o caminho muda junto (troque "3.3.4" conforme o output
+         do sbt). -->
+    <script src="target/scala-3.3.4/frontend-scala-fastopt/main.js"></script>
+  </body>
+</html>

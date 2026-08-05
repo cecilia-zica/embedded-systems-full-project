@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Monitor Cardíaco</title>
+  <style>
+    /* reset básico + fonte parecida com Material (a mesma família que o Flutter usa por padrão) */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, Roboto, 'Segoe UI', sans-serif;
+      background: #fff5f5; /* equivalente ao ColorScheme.fromSeed(Colors.red) do Flutter, tom claro */
+      color: #1a1a1a;
+    }
+    #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .appbar {
+      background: #fff;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      padding: 16px;
+      margin: 12px 16px;
+    }
+
+    .legend-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 14px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .content { flex: 1; overflow-y: auto; padding-bottom: 70px; }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .log-main { flex: 1; }
+    .log-title { font-weight: 600; font-size: 15px; }
+    .log-subtitle { font-size: 13px; color: #666; margin-top: 2px; }
+    .chip {
+      padding: 4px 10px; border-radius: 16px; font-size: 12px; font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff;
+      display: flex;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.12);
+    }
+    .nav-item {
+      flex: 1; text-align: center; padding: 10px 0; cursor: pointer;
+      color: #757575; font-size: 12px; border: none; background: none;
+    }
+    .nav-item.active { color: #c62828; font-weight: 600; }
+    .nav-item .icon { font-size: 20px; display: block; }
+
+    .field-label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; display: block; }
+    .text-input {
+      width: 100%; padding: 12px; border: 1px solid #bbb; border-radius: 6px;
+      font-size: 16px; margin-bottom: 16px;
+    }
+    .switch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .switch {
+      position: relative; width: 46px; height: 26px; border-radius: 13px;
+      border: none; cursor: pointer; transition: background 0.15s;
+    }
+    .switch::after {
+      content: ''; position: absolute; top: 3px; width: 20px; height: 20px;
+      border-radius: 50%; background: #fff; transition: left 0.15s;
+    }
+
+    .btn-primary {
+      width: 100%; height: 48px; border: none; border-radius: 8px;
+      background: #c62828; color: #fff; font-size: 15px; font-weight: 600;
+      margin: 24px 16px 16px; width: calc(100% - 32px); cursor: pointer;
+    }
+    .btn-primary:disabled { opacity: 0.6; }
+
+    .snackbar {
+      position: fixed; bottom: 76px; left: 16px; right: 16px;
+      background: #323232; color: #fff; padding: 12px 16px; border-radius: 8px;
+      font-size: 14px; text-align: center;
+    }
+
+    .center-msg { text-align: center; padding: 60px 20px; color: #666; }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #c62828;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + ReactDOM baixados localmente (sem depender de internet na apresentação) -->
+  <script src="react.production.min.js"></script>
+  <script src="react-dom.production.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

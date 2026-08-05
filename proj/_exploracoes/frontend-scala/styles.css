@@ -1,0 +1,452 @@
+/* Design tokens — tema ESCURO, par da versão React (que usa a mesma
+   paleta navy + dourado, só que no tema CLARO — ver
+   proj/frontend-react/src/theme/tokens.css). Fundo em navy profundo
+   (#0f172a — a própria pesquisa de tendências de dashboard 2026 recomenda
+   esse tom pra tema escuro elegante) com cards em camadas mais claras, e
+   dourado usado como acento — é literalmente NO tema escuro que a
+   combinação navy+dourado brilha mais (contraste natural, sem precisar de
+   truque nenhum). Scala.js não tem "import de CSS" (sem bundler aqui, só
+   sbt) então tudo fica num arquivo só, referenciado via <link> no index.html. */
+
+:root {
+  /* --- superfícies (camadas, do fundo pro mais "elevado") --- */
+  --color-bg: #0f172a;
+  --color-surface: #161f36;
+  --color-border: #263252;
+
+  /* --- texto --- */
+  --color-text: #eef1f8;
+  --color-text-muted: #8b98b8;
+
+  /* --- marca: dourado é o acento principal no tema escuro (ação primária
+     inclusa) --- */
+  --color-gold: #d4af37;
+  --color-gold-strong: #b8942a;
+  --color-gold-soft: rgba(212, 175, 55, 0.14);
+
+  /* --- status semântico --- */
+  --status-muted-fg: #64748b;
+  --status-normal-fg: #4ade80;
+  --status-normal-bg: rgba(74, 222, 128, 0.14);
+  --status-alert-fg: #fb923c;
+  --status-alert-bg: rgba(251, 146, 60, 0.14);
+  --status-error-fg: #f87171;
+  --status-error-bg: rgba(248, 113, 113, 0.14);
+
+  /* --- tipografia --- */
+  --font-heading: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* --- forma --- */
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 28px -14px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- barra superior ---------- */
+.appbar {
+  background: var(--color-surface);
+  padding: 20px 20px 18px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 21px;
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.appbar-actions {
+  position: absolute;
+  right: 20px;
+  display: flex;
+  gap: 6px;
+}
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover {
+  background: var(--color-gold-soft);
+  color: var(--color-gold);
+}
+
+/* ---------- aviso de modo demonstração ---------- */
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 16px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-gold-soft);
+  color: var(--color-gold);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- cards ---------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  margin: 16px 16px 0;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.card-title svg {
+  color: var(--color-gold);
+  flex-shrink: 0;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-muted {
+  background: var(--status-muted-fg);
+}
+.dot-normal {
+  background: var(--status-normal-fg);
+}
+.dot-alert {
+  background: var(--status-alert-fg);
+}
+.dot-error {
+  background: var(--status-error-fg);
+}
+.legend-row b {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 84px;
+}
+
+/* ---------- lista de logs ---------- */
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.log-main {
+  flex: 1;
+  min-width: 0;
+}
+.log-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.log-subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* classes de status compartilhadas por .avatar e .chip — a UI nunca decide
+   cor por conta própria, só aplica status-normal/status-alert/status-error
+   conforme Format.classToStatus() */
+.status-normal {
+  color: var(--status-normal-fg);
+  background: var(--status-normal-bg);
+}
+.status-alert {
+  color: var(--status-alert-fg);
+  background: var(--status-alert-bg);
+}
+.status-error {
+  color: var(--status-error-fg);
+  background: var(--status-error-bg);
+}
+
+/* ---------- navegação inferior ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+}
+.nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0 10px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  border: none;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+.nav-item svg {
+  transition: color 0.15s;
+}
+.nav-item.active {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.nav-item.active svg {
+  color: var(--color-gold);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 2px;
+  background: var(--color-gold);
+  border-radius: 2px;
+}
+
+/* ---------- formulário (tela de config) ---------- */
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+  display: block;
+}
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  margin-bottom: 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px var(--color-gold-soft);
+}
+
+.switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.switch {
+  position: relative;
+  width: 44px;
+  height: 25px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  background: var(--color-border);
+}
+.switch.on {
+  background: var(--color-gold);
+}
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  transition: transform 0.15s;
+}
+.switch.on .switch-thumb {
+  transform: translateX(19px);
+  background: #1a1305;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--color-gold);
+  color: #1a1305;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 24px 16px 16px;
+  width: calc(100% - 32px);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-gold-strong);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.snackbar {
+  position: fixed;
+  bottom: 90px;
+  left: 16px;
+  right: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 13px 18px;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.5);
+}
+
+.center-msg {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 40px auto;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- modal de confirmação (efeito "vidro fosco") ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.modal-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 22px;
+  width: min(320px, calc(100% - 48px));
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+}
+.modal-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.modal-body {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.modal-actions button {
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 9px 14px;
+  border-radius: var(--radius-control);
+  transition: background 0.15s;
+}
+.modal-actions button:hover {
+  background: var(--color-bg);
+}
+.modal-actions .danger {
+  color: var(--status-error-fg);
+}
