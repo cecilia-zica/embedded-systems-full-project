@@ -1,0 +1,42 @@
+# Fly.io deploy config for the Go backend.
+#
+# One-time setup (from this directory):
+#   fly launch --no-deploy            # cria o app; ajuste o nome abaixo
+#   fly volumes create backend_data --size 1 --region gru
+#   fly secrets set API_KEY=<chave-forte> ALLOWED_ORIGIN=https://<seu-app-web>
+#   fly deploy
+#
+# Fly termina o TLS pra você, então o app Flutter Web (HTTPS) consegue falar
+# com o backend sem cair no bloqueio de mixed-content.
+
+app = "embedded-monitor-backend"   # troque por um nome único
+primary_region = "gru"             # São Paulo
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DB_PATH = "/data/app.db"
+
+# Volume persistente pro SQLite — sem isso, cada deploy zeraria o banco.
+[[mounts]]
+  source = "backend_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "5s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "3s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
