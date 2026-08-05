@@ -1,0 +1,6 @@
+# PlatformIO build output
+.pio/
+
+# Real WiFi/API credentials live here — copy secrets.example.h to secrets.h
+# and fill it in locally. Never commit this file.
+src/secrets.h

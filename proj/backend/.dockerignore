@@ -1,0 +1,7 @@
+# Keep the build context small and free of stale/local artifacts.
+# The Go build inside the image produces its own binary; never ship the host one.
+backend
+main
+*.db
+.dockerignore
+Dockerfile

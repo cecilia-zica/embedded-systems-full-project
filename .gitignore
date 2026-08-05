@@ -1,0 +1,40 @@
+# ---- Secrets (never commit) ----
+**/secrets.h
+**/.env
+!**/.env.example
+
+# ---- Go ----
+proj/backend/backend
+proj/backend/main
+**/*.db
+
+# ---- Node / Vite ----
+**/node_modules/
+**/dist/
+
+# ---- Flutter / Dart ----
+**/.dart_tool/
+**/build/
+
+# ---- PlatformIO ----
+**/.pio/
+
+# ---- Scala / sbt ----
+**/target/
+**/.bsp/
+**/.metals/
+
+# ---- OS / IDE ----
+.DS_Store
+**/.idea/
+
+# ---- Runtime data (SQLite volume) ----
+proj/data/
+
+# ---- Personal notes & scratch (not part of the deliverable) ----
+learning/
+proj/note.txt
+proj/RELATORIO_REVISAO.md
+proj/ROTEIRO_APRESENTACAO.md
+proj/firmware_debug/
+proj/teste_sensor_arduino_ide/
