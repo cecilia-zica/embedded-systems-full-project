@@ -19,14 +19,14 @@ func main() {
 	// Health check: sem auth, usado pelo Docker/orquestrador pra saber se subiu
 	mux.HandleFunc("GET /healthz", handleHealthz)
 
-	// Rotas do serviço de Logging
-	mux.HandleFunc("POST /api/v1/logging", requireAPIKey(handlePostLogging))
+	// Rotas do serviço de Logging (escrita passa pelo rate limiter por IP)
+	mux.HandleFunc("POST /api/v1/logging", rateLimit(requireAPIKey(handlePostLogging)))
 	mux.HandleFunc("GET /api/v1/logging", requireAPIKey(handleGetLogging))
-	mux.HandleFunc("DELETE /api/v1/logging", requireAPIKey(handleDeleteLogging))
+	mux.HandleFunc("DELETE /api/v1/logging", rateLimit(requireAPIKey(handleDeleteLogging)))
 
 	// Rotas do serviço de Controle
 	mux.HandleFunc("GET /api/v1/controle", requireAPIKey(handleGetControle))
-	mux.HandleFunc("POST /api/v1/controle", requireAPIKey(handlePostControle))
+	mux.HandleFunc("POST /api/v1/controle", rateLimit(requireAPIKey(handlePostControle)))
 
 	//servidor com timeouts em vez de ListenAndServe puro
 	server := &http.Server{

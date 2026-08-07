@@ -165,6 +165,40 @@ func TestRequireAPIKey(t *testing.T) {
 	}
 }
 
+// TestIPRateLimiter: dentro do burst passa, estourou bloqueia, e cada IP tem
+// balde independente.
+func TestIPRateLimiter(t *testing.T) {
+	l := newIPRateLimiter(0.0001, 3) // reposição desprezível, burst 3
+	ip := "10.0.0.1"
+
+	for i := 1; i <= 3; i++ {
+		if !l.allow(ip) {
+			t.Fatalf("req %d deveria passar (dentro do burst)", i)
+		}
+	}
+	if l.allow(ip) {
+		t.Fatal("4a req do mesmo IP deveria ser bloqueada (burst esgotado)")
+	}
+	if !l.allow("10.0.0.2") {
+		t.Fatal("IP diferente deveria ter balde independente")
+	}
+}
+
+// TestClientIP: X-Forwarded-For tem prioridade; senão usa o host do RemoteAddr.
+func TestClientIP(t *testing.T) {
+	r1 := httptest.NewRequest(http.MethodGet, "/", nil)
+	r1.RemoteAddr = "203.0.113.9:5555"
+	if got := clientIP(r1); got != "203.0.113.9" {
+		t.Fatalf("RemoteAddr: esperava 203.0.113.9, veio %q", got)
+	}
+
+	r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	r2.Header.Set("X-Forwarded-For", "198.51.100.7, 10.0.0.1")
+	if got := clientIP(r2); got != "198.51.100.7" {
+		t.Fatalf("XFF: esperava 198.51.100.7, veio %q", got)
+	}
+}
+
 // garante que os testes não deixem lixo de env pra outros pacotes
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
