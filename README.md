@@ -1,5 +1,8 @@
 # Monitor Cardíaco IoT — ESP32 + Go + Flutter
 
+![CI](https://github.com/cecilia-zica/embedded-systems-full-project/actions/workflows/ci.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Sistema embarcado ponta-a-ponta: um **ESP32** com sensor **MAX30102** mede
 batimentos (BPM) e SpO2, classifica cada leitura e envia para uma **API em Go**,
 que persiste em **SQLite**. Um app **Flutter** mostra o histórico em tempo real e
@@ -7,6 +10,22 @@ ajusta, ao vivo, o limiar de alerta que o dispositivo passa a respeitar.
 
 > Projeto de Sistemas Embarcados — hardware, firmware, backend e app, cada um
 > na sua stack, integrados por uma API HTTP simples.
+
+<!-- 🔗 Demo ao vivo: adicione o link aqui depois do deploy no Fly + GitHub Pages -->
+
+## Demonstração
+
+<!--
+Depois de adicionar as imagens em docs/img/ (ver docs/img/README.md), descomente:
+
+| App — Logs | App — Config |
+|------------|--------------|
+| ![App Logs](docs/img/app-logs.png) | ![App Config](docs/img/app-config.png) |
+
+![ESP32 medindo com o LED de status](docs/img/esp32-demo.gif)
+-->
+
+_Screenshots e GIF em breve — os arquivos ficam em [`docs/img/`](docs/img)._
 
 ## Arquitetura
 
