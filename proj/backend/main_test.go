@@ -76,6 +76,27 @@ func TestPostLoggingRejectsInvalidBody(t *testing.T) {
 	}
 }
 
+// TestPostLoggingRejectsOutOfRange: leituras fora de faixa plausível dão 400.
+func TestPostLoggingRejectsOutOfRange(t *testing.T) {
+	setupTestDB(t)
+
+	cases := []string{
+		`{"bpm":-5,"spo2":98}`,  // bpm negativo
+		`{"bpm":0,"spo2":98}`,   // bpm zero
+		`{"bpm":500,"spo2":98}`, // bpm absurdo
+		`{"bpm":72,"spo2":150}`, // spo2 > 100
+		`{"bpm":72,"spo2":-1}`,  // spo2 negativo
+	}
+	for _, body := range cases {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/logging", strings.NewReader(body))
+		handlePostLogging(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("body %s: esperava 400, veio %d", body, rec.Code)
+		}
+	}
+}
+
 // TestConfigRoundTrip: o que o POST /controle salva tem que voltar no GET.
 func TestConfigRoundTrip(t *testing.T) {
 	setupTestDB(t)

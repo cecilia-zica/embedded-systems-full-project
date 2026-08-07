@@ -58,7 +58,7 @@ func initDB() {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			bpm REAL NOT NULL,
 			spo2 REAL NOT NULL,
-			class INT,
+			class INT NOT NULL DEFAULT 0,
 			user_id TEXT NOT NULL default 'unknown',
 			created_at DATETIME default CURRENT_TIMESTAMP
 		)

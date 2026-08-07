@@ -31,6 +31,17 @@ func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 	if l.UserID == "" {
 		l.UserID = "unknown"
 	}
+
+	//validação: rejeita leituras fora de faixa plausível em vez de gravar lixo
+	if l.BPM <= 0 || l.BPM > 300 {
+		writeJSONError(w, http.StatusBadRequest, "bpm fora de faixa (0 < bpm <= 300)")
+		return
+	}
+	if l.SpO2 < 0 || l.SpO2 > 100 {
+		writeJSONError(w, http.StatusBadRequest, "spo2 fora de faixa (0 <= spo2 <= 100)")
+		return
+	}
+
 	result, err := db.Exec(
 		`INSERT INTO logs (bpm, spo2, class, user_id) VALUES (?, ?, ?, ?)`,
 		l.BPM, l.SpO2, l.Class, l.UserID,
@@ -60,7 +71,7 @@ func handleDeleteLogging(w http.ResponseWriter, r *http.Request) {
 
 func handleGetLogging(w http.ResponseWriter, r *http.Request) {
 	logs := []LogEntry{}
-	rows, err := db.Query(`SELECT id, bpm, spo2, class, user_id, created_at FROM logs ORDER BY created_at DESC LIMIT 50 `)
+	rows, err := db.Query(`SELECT id, bpm, spo2, COALESCE(class, 0), user_id, created_at FROM logs ORDER BY created_at DESC LIMIT 50 `)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError) //se der erro no Scan, devolve 500 pro cliente e sai da função
 		return
