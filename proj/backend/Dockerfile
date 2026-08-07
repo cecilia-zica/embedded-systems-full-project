@@ -9,7 +9,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Estágio 2: execução (imagem mínima)
-FROM alpine:latest
+# imagem pinada (não 'latest') pra build reprodutível
+FROM alpine:3.20
 RUN apk --no-cache add ca-certificates wget
 
 # roda como usuário sem privilégios em vez de root
