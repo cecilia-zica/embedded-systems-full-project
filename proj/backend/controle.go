@@ -12,7 +12,7 @@ type Config struct {
 	AlertEnabled bool `json:"alert_enabled"`
 }
 
-//handleGetControle: busca a config atual (bpm_threshold, alert_enabled) salva no banco e devolve como JSON
+// handleGetControle: busca a config atual (bpm_threshold, alert_enabled) salva no banco e devolve como JSON
 func handleGetControle(w http.ResponseWriter, r *http.Request) {
 	var cfg Config
 	var alertEnabledInt int
@@ -31,7 +31,7 @@ func handleGetControle(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(cfg)
 }
 
-//handlePostControle: recebe uma nova config no body (JSON), valida e atualiza o banco
+// handlePostControle: recebe uma nova config no body (JSON), valida e atualiza o banco
 func handlePostControle(w http.ResponseWriter, r *http.Request) {
 	var req Config
 

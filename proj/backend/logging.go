@@ -48,7 +48,7 @@ func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int64{"id": id})
 }
 
-//handleDeleteLogging: apaga todo o histórico de logs (botão "limpar" do app)
+// handleDeleteLogging: apaga todo o histórico de logs (botão "limpar" do app)
 func handleDeleteLogging(w http.ResponseWriter, r *http.Request) {
 	if _, err := db.Exec(`DELETE FROM logs`); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

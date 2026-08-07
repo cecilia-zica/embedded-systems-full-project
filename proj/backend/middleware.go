@@ -12,8 +12,8 @@ import (
 	"os"
 )
 
-//projeto pessoal: chave fixa em código, não depende de setar env var toda vez que roda.
-//se um dia isso for exposto fora do localhost, trocar por uma chave forte via API_KEY.
+// projeto pessoal: chave fixa em código, não depende de setar env var toda vez que roda.
+// se um dia isso for exposto fora do localhost, trocar por uma chave forte via API_KEY.
 const defaultAPIKey = "zica123"
 
 var apiKey = getAPIKey()
@@ -25,8 +25,8 @@ func getAPIKey() string {
 	return defaultAPIKey
 }
 
-//se ALLOWED_ORIGIN não estiver setada, cai pra "*" (dev local, teste no Chrome).
-//em produção, setar ALLOWED_ORIGIN com o domínio real do app pra travar o CORS.
+// se ALLOWED_ORIGIN não estiver setada, cai pra "*" (dev local, teste no Chrome).
+// em produção, setar ALLOWED_ORIGIN com o domínio real do app pra travar o CORS.
 var allowedOrigin = getAllowedOrigin()
 
 func getAllowedOrigin() string {
@@ -36,8 +36,8 @@ func getAllowedOrigin() string {
 	return "*"
 }
 
-//writeJSONError centraliza a resposta de erro: garante Content-Type application/json
-//antes do status (senão o cliente recebe o JSON marcado como text/plain).
+// writeJSONError centraliza a resposta de erro: garante Content-Type application/json
+// antes do status (senão o cliente recebe o JSON marcado como text/plain).
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -64,8 +64,8 @@ func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-//CORS é regra do navegador, não do servidor — sem esse header o Chrome bloqueia a resposta
-//ESP32 e o app nativo no celular não passam por essa regra, é 100% coisa de browser
+// CORS é regra do navegador, não do servidor — sem esse header o Chrome bloqueia a resposta
+// ESP32 e o app nativo no celular não passam por essa regra, é 100% coisa de browser
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin) //configurável via ALLOWED_ORIGIN; default "*" pra dev local

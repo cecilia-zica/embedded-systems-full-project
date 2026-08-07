@@ -64,7 +64,7 @@ func main() {
 	log.Println("Servidor encerrado com sucesso.")
 }
 
-//handleHealthz: 200 se o processo está de pé e o banco responde.
+// handleHealthz: 200 se o processo está de pé e o banco responde.
 func handleHealthz(w http.ResponseWriter, r *http.Request) {
 	if db == nil || db.Ping() != nil {
 		http.Error(w, "db indisponível", http.StatusServiceUnavailable)
