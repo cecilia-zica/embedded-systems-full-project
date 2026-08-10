@@ -25,7 +25,7 @@ func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 
 	//Decode: JSON -> struct (lê a leitura que o ESP32 mandou no body)
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
-		http.Error(w, "body inválido", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "body inválido")
 		return
 	}
 	if l.UserID == "" {
@@ -48,7 +48,8 @@ func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("erro ao inserir log:", err)
+		writeJSONError(w, http.StatusInternalServerError, "erro interno ao salvar leitura")
 		return
 	}
 	id, _ := result.LastInsertId()
@@ -62,7 +63,8 @@ func handlePostLogging(w http.ResponseWriter, r *http.Request) {
 // handleDeleteLogging: apaga todo o histórico de logs (botão "limpar" do app)
 func handleDeleteLogging(w http.ResponseWriter, r *http.Request) {
 	if _, err := db.Exec(`DELETE FROM logs`); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("erro ao apagar logs:", err)
+		writeJSONError(w, http.StatusInternalServerError, "erro interno ao apagar logs")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -73,7 +75,8 @@ func handleGetLogging(w http.ResponseWriter, r *http.Request) {
 	logs := []LogEntry{}
 	rows, err := db.Query(`SELECT id, bpm, spo2, COALESCE(class, 0), user_id, created_at FROM logs ORDER BY created_at DESC LIMIT 50 `)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) //se der erro no Scan, devolve 500 pro cliente e sai da função
+		log.Println("erro ao consultar logs:", err)
+		writeJSONError(w, http.StatusInternalServerError, "erro interno ao ler leituras")
 		return
 	}
 	defer rows.Close()
@@ -86,7 +89,8 @@ func handleGetLogging(w http.ResponseWriter, r *http.Request) {
 		logs = append(logs, l)
 	}
 	if err := rows.Err(); err != nil { //erro de iteração (ex: conexão caiu no meio do loop)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("erro ao iterar logs:", err)
+		writeJSONError(w, http.StatusInternalServerError, "erro interno ao ler leituras")
 		return
 	}
 
