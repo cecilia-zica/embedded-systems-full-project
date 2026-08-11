@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Monitor Cardíaco',
+      title: 'Heart Monitor',
       theme: ThemeData(
         // fromSeed derives the full Material 3 palette from a single color.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),

@@ -35,7 +35,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao carregar configuração: $e')),
+        SnackBar(content: Text('Failed to load config: $e')),
       );
     }
   }
@@ -45,8 +45,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     final threshold = int.tryParse(_thresholdController.text);
     if (threshold == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Digite um número válido pro limiar de BPM')),
+        const SnackBar(content: Text('Enter a valid BPM threshold')),
       );
       return;
     }
@@ -56,12 +55,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
       await ApiService.postConfig(threshold, _alertEnabled);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuração salva!')),
+        const SnackBar(content: Text('Config saved!')),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: $e')),
+        SnackBar(content: Text('Failed to save: $e')),
       );
     } finally {
       setState(() => _saving = false);
@@ -75,7 +74,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações')),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -86,7 +85,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Limiar de alerta (BPM)',
+                    'Alert threshold (BPM)',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
@@ -95,13 +94,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: 'ex: 120',
+                      hintText: 'e.g. 120',
                     ),
                   ),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Alerta ativado'),
+                    title: const Text('Alerts enabled'),
                     value: _alertEnabled,
                     // Only updates local state; persisted on SAVE.
                     onChanged: (value) => setState(() => _alertEnabled = value),
@@ -125,7 +124,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('SALVAR'),
+                  : const Text('SAVE'),
             ),
           ),
         ],

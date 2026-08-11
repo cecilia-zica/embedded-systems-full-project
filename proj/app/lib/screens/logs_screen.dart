@@ -51,16 +51,16 @@ class _LogsScreenState extends State<LogsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Limpar log?'),
+        title: const Text('Clear log?'),
         content: const Text(
-            'Apaga todo o histórico de leituras. Não dá pra desfazer.'),
+            'Deletes the entire reading history. This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Limpar')),
+              child: const Text('Clear')),
         ],
       ),
     );
@@ -71,12 +71,12 @@ class _LogsScreenState extends State<LogsScreen> {
       if (!mounted) return;
       setState(() => _logs = []);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Log limpo!')),
+        const SnackBar(content: Text('Log cleared!')),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao limpar log: $e')),
+        SnackBar(content: Text('Failed to clear log: $e')),
       );
     }
   }
@@ -87,9 +87,9 @@ class _LogsScreenState extends State<LogsScreen> {
       case 0:
         return 'Normal';
       case 1:
-        return 'Alerta';
+        return 'Alert';
       default:
-        return 'Erro Leitura';
+        return 'Read error';
     }
   }
 
@@ -114,15 +114,10 @@ class _LogsScreenState extends State<LogsScreen> {
   /// Fixed legend explaining the device LED patterns (GPIO13, active-high).
   Widget _buildLedLegend(BuildContext context) {
     final items = [
-      (Icons.circle, Colors.grey, 'Aceso fixo', 'Esperando leitura'),
-      (Icons.circle, Colors.green, 'Pisca devagar', 'Normal'),
-      (Icons.circle, Colors.orange, 'Pisca rápido', 'Leitura inconsistente'),
-      (
-        Icons.circle,
-        Colors.red,
-        '2 piscadas + pausa',
-        'Alerta — acima do limiar'
-      ),
+      (Icons.circle, Colors.grey, 'Solid on', 'Waiting for reading'),
+      (Icons.circle, Colors.green, 'Slow blink', 'Normal'),
+      (Icons.circle, Colors.orange, 'Fast blink', 'Inconsistent reading'),
+      (Icons.circle, Colors.red, '2 blinks + pause', 'Alert — above threshold'),
     ];
 
     return Card(
@@ -137,7 +132,7 @@ class _LogsScreenState extends State<LogsScreen> {
                 Icon(Icons.lightbulb, color: Colors.amber.shade700, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'O que o LED do sensor significa',
+                  'What the sensor LED means',
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ],
@@ -170,9 +165,9 @@ class _LogsScreenState extends State<LogsScreen> {
       body = const Center(child: CircularProgressIndicator());
     } else if (_error != null) {
       // TODO: friendlier error message with a retry button.
-      body = Center(child: Text('Erro: $_error'));
+      body = Center(child: Text('Error: $_error'));
     } else if (_logs.isEmpty) {
-      body = const Center(child: Text('Nenhuma leitura ainda'));
+      body = const Center(child: Text('No readings yet'));
     } else {
       body = RefreshIndicator(
         onRefresh: _fetchLogs,
