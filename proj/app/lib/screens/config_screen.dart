@@ -1,8 +1,9 @@
-// Tela 2 — mostra e edita o limiar de alerta (bpm_threshold) que o ESP32 consulta a cada 30s
-
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 
+/// Screen for viewing and editing the alert threshold (`bpm_threshold`) that
+/// the device polls from the backend.
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
 
@@ -11,22 +12,22 @@ class ConfigScreen extends StatefulWidget {
 }
 
 class _ConfigScreenState extends State<ConfigScreen> {
-  //TextEditingController = TextInput controlado do RN, já guarda e sincroniza o texto
   final TextEditingController _thresholdController = TextEditingController();
-  bool _alertEnabled = true; //useState(true)
-  bool _loading = true; //useState(true)
-  bool _saving = false; //useState(false)
+  bool _alertEnabled = true;
+  bool _loading = true;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentConfig(); // pré-preenche os campos com o que já está salvo no backend
+    _loadCurrentConfig(); // pre-fill the fields with the config already saved
   }
 
   Future<void> _loadCurrentConfig() async {
     try {
       final config = await ApiService.getConfig();
-      //mounted: evita setState numa tela já destruída (trocou de aba antes da resposta)
+      // Guard against setState after the widget was disposed (e.g. the tab was
+      // switched before the response arrived).
       if (!mounted) return;
       setState(() {
         _thresholdController.text = config['bpm_threshold'].toString();
@@ -43,11 +44,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Future<void> _saveConfig() async {
-    //tryParse devolve null em vez de exceção se não for número válido; valida antes de gastar rede
+    // tryParse returns null instead of throwing on invalid input, so validate
+    // before spending a network round-trip.
     final threshold = int.tryParse(_thresholdController.text);
     if (threshold == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Digite um número válido pro limiar de BPM')),
+        const SnackBar(
+            content: Text('Digite um número válido pro limiar de BPM')),
       );
       return;
     }
@@ -56,7 +59,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
     try {
       await ApiService.postConfig(threshold, _alertEnabled);
       if (!mounted) return;
-      //SnackBar = o Toast do Flutter
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Configuração salva!')),
       );
@@ -105,7 +107,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Alerta ativado'),
                     value: _alertEnabled,
-                    //só atualiza o estado local, salva de verdade só ao clicar SALVAR
+                    // Only updates local state; persisted on SAVE.
                     onChanged: (value) => setState(() => _alertEnabled = value),
                   ),
                 ],
@@ -136,5 +138,4 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 }
 
-// O QUE FALTA:
-// - desabilitar o botão SALVAR se o valor não mudou
+// TODO: disable the SAVE button while the value is unchanged.

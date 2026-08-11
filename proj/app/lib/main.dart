@@ -1,23 +1,21 @@
-//rotas e navegação — MaterialApp é tipo o NavigationContainer do RN
-
 import 'package:flutter/material.dart';
-import 'screens/logs_screen.dart';
-import 'screens/config_screen.dart';
 
-//entry point, igual index.js/App.js do RN
+import 'screens/config_screen.dart';
+import 'screens/logs_screen.dart';
+
 void main() => runApp(const MyApp());
 
-//StatelessWidget = componente funcional puro do React (sem useState)
+/// Root widget: applies the app theme and hosts the navigation shell.
 class MyApp extends StatelessWidget {
-  const MyApp({super.key}); //key = identidade do widget, tipo key de listas no React
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Monitor Cardíaco',
-      // fromSeed gera toda a paleta (botões, switch, appbar) a partir de 1 cor —
-      // sem isso o Material 3 ignora primarySwatch e cai no roxo padrão
       theme: ThemeData(
+        // fromSeed derives the full palette from a single color; without it
+        // Material 3 ignores primarySwatch and falls back to the default purple.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(centerTitle: true, elevation: 1),
@@ -27,29 +25,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-//StatefulWidget = componente com useState; guarda qual das 2 telas está visível
+/// Bottom-navigation shell that switches between the Logs and Config screens.
 class HomeNav extends StatefulWidget {
   const HomeNav({super.key});
 
-  //"_" na frente = privado do arquivo, convenção do Dart
   @override
   State<HomeNav> createState() => _HomeNavState();
 }
 
 class _HomeNavState extends State<HomeNav> {
-  int _indiceAtual = 0; //useState(0)
+  int _indiceAtual = 0;
 
-  //uma tela por índice da BottomNavigationBar
   static const List<Widget> _telas = [LogsScreen(), ConfigScreen()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //Scaffold = moldura padrão Material (appbar + corpo + bottom nav)
       body: _telas[_indiceAtual],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _indiceAtual,
-        //setState = setIndiceAtual do useState + redesenha a tela
         onTap: (index) => setState(() => _indiceAtual = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Logs'),

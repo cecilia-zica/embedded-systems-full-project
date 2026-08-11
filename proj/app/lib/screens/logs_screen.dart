@@ -1,9 +1,9 @@
-// tela 1 — mostra o histórico (logs) de leituras que o ESP32 mandou
-
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 
-class LogsScreen extends StatefulWidget { //muda quando o dado/esado muda
+/// Screen that lists the reading history reported by the device.
+class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
 
   @override
@@ -13,7 +13,7 @@ class LogsScreen extends StatefulWidget { //muda quando o dado/esado muda
 class _LogsScreenState extends State<LogsScreen> {
   List<dynamic> _logs = [];
   bool _loading = true;
-  String? _erro; 
+  String? _erro;
 
   @override
   void initState() {
@@ -21,17 +21,16 @@ class _LogsScreenState extends State<LogsScreen> {
     _fetchLogs();
   }
 
-  bool _fetching = false; // evita 2 requisições concorrentes (refresh + pull-to-refresh juntos)
+  // Prevents two concurrent fetches (refresh button + pull-to-refresh).
+  bool _fetching = false;
 
   Future<void> _fetchLogs() async {
     if (_fetching) return;
     _fetching = true;
 
-    //Future<T> do Dart == Promise<T> do JS
     try {
       final logs = await ApiService.getLogs();
-      //mounted: evita setState numa tela já destruída
-      if (!mounted) return;
+      if (!mounted) return; // avoid setState after the widget was disposed
       setState(() {
         _logs = logs;
         _loading = false;
@@ -47,16 +46,21 @@ class _LogsScreenState extends State<LogsScreen> {
     }
   }
 
-  // pede confirmação antes de apagar — some com o histórico todo, sem volta
+  /// Clears the entire history after confirmation; the deletion is irreversible.
   Future<void> _confirmarLimparLogs() async {
     final confirmou = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Limpar log?'),
-        content: const Text('Apaga todo o histórico de leituras. Não dá pra desfazer.'),
+        content: const Text(
+            'Apaga todo o histórico de leituras. Não dá pra desfazer.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Limpar')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Limpar')),
         ],
       ),
     );
@@ -77,7 +81,7 @@ class _LogsScreenState extends State<LogsScreen> {
     }
   }
 
-  // 0=Repouso, 1=Ativo, 2=Erro — mesma classificação do TinyML no ESP32
+  // Class codes mirror the device classifier: 0=normal, 1=alert, 2=read error.
   String _classToText(int c) {
     switch (c) {
       case 0:
@@ -100,20 +104,25 @@ class _LogsScreenState extends State<LogsScreen> {
     }
   }
 
-  //backend salva em UTC; toLocal() converte pro fuso do dispositivo
+  // The backend stores timestamps in UTC; toLocal() shifts to the device zone.
   String _formatTimestamp(String iso) {
     final dt = DateTime.parse(iso).toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(dt.day)}/${two(dt.month)} ${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
   }
 
-  //legenda fixa explicando os padrões do LED do ESP32 (GPIO13, ativo-ALTO)
+  /// Fixed legend explaining the device LED patterns (GPIO13, active-high).
   Widget _buildLedLegend(BuildContext context) {
     final items = [
       (Icons.circle, Colors.grey, 'Aceso fixo', 'Esperando leitura'),
       (Icons.circle, Colors.green, 'Pisca devagar', 'Normal'),
       (Icons.circle, Colors.orange, 'Pisca rápido', 'Leitura inconsistente'),
-      (Icons.circle, Colors.red, '2 piscadas + pausa', 'Alerta — acima do limiar'),
+      (
+        Icons.circle,
+        Colors.red,
+        '2 piscadas + pausa',
+        'Alerta — acima do limiar'
+      ),
     ];
 
     return Card(
@@ -141,7 +150,8 @@ class _LogsScreenState extends State<LogsScreen> {
                   children: [
                     Icon(icon, color: color, size: 10),
                     const SizedBox(width: 8),
-                    Text('$pattern — ', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text('$pattern — ',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     Text(meaning),
                   ],
                 ),
@@ -159,15 +169,13 @@ class _LogsScreenState extends State<LogsScreen> {
     if (_loading) {
       body = const Center(child: CircularProgressIndicator());
     } else if (_erro != null) {
-      // TODO (falta implementar): mensagem de erro mais amigável + botão de retry
+      // TODO: friendlier error message with a retry button.
       body = Center(child: Text('Erro: $_erro'));
     } else if (_logs.isEmpty) {
       body = const Center(child: Text('Nenhuma leitura ainda'));
     } else {
-      //RefreshIndicator: gesto de puxar pra atualizar, onRefresh reaproveita _fetchLogs
       body = RefreshIndicator(
         onRefresh: _fetchLogs,
-        //ListView.separated = ListView.builder + divisor entre itens
         child: ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: _logs.length,
@@ -209,11 +217,13 @@ class _LogsScreenState extends State<LogsScreen> {
         title: const Text('Logs'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchLogs),
-          IconButton(icon: const Icon(Icons.delete_outline), onPressed: _confirmarLimparLogs),
+          IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _confirmarLimparLogs),
         ],
       ),
-      // legenda do LED fica fixa fora do scroll da lista (Column + Expanded,
-      // em vez de rolar junto com os itens de log)
+      // Keep the legend pinned above the scrolling list instead of scrolling
+      // together with the log items.
       body: Column(
         children: [
           _buildLedLegend(context),
@@ -224,6 +234,7 @@ class _LogsScreenState extends State<LogsScreen> {
   }
 }
 
-// O QUE FALTA:
-// - filtro por user_id (RFID) — hoje mostra todo mundo junto, só exibe o UID no subtítulo
-// - tratamento de erro mais bonito (hoje só mostra o texto da exception)
+// TODO:
+// - filter by user_id (RFID); today all users are shown together, with the UID
+//   only in the subtitle.
+// - nicer error handling (currently just prints the exception text).
