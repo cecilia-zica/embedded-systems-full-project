@@ -1,5 +1,6 @@
-//rate limiting simples por IP nas rotas de escrita: token bucket em memória.
-//protege contra flood de POST/DELETE, já que a API key é pública nos clientes.
+// Simple per-IP rate limiting for the write endpoints: an in-memory token
+// bucket that guards against POST/DELETE floods, since the API key is public
+// in the clients.
 
 package main
 
@@ -16,11 +17,12 @@ type tokenBucket struct {
 	last   time.Time
 }
 
+// ipRateLimiter keeps one token bucket per client IP.
 type ipRateLimiter struct {
 	mu      sync.Mutex
 	buckets map[string]*tokenBucket
-	rps     float64 // tokens repostos por segundo
-	burst   float64 // capacidade máxima do balde
+	rps     float64 // tokens refilled per second
+	burst   float64 // maximum bucket capacity
 }
 
 func newIPRateLimiter(rps, burst float64) *ipRateLimiter {
@@ -31,7 +33,8 @@ func newIPRateLimiter(rps, burst float64) *ipRateLimiter {
 	}
 }
 
-// allow debita 1 token do balde do IP; false = estourou o limite.
+// allow spends one token from the IP's bucket; it returns false when the limit
+// is exceeded.
 func (l *ipRateLimiter) allow(ip string) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -42,7 +45,7 @@ func (l *ipRateLimiter) allow(ip string) bool {
 		b = &tokenBucket{tokens: l.burst, last: now}
 		l.buckets[ip] = b
 	}
-	//repõe tokens proporcional ao tempo passado, até o teto (burst)
+	// refill proportionally to the elapsed time, capped at burst
 	b.tokens += now.Sub(b.last).Seconds() * l.rps
 	if b.tokens > l.burst {
 		b.tokens = l.burst
@@ -56,8 +59,8 @@ func (l *ipRateLimiter) allow(ip string) bool {
 	return false
 }
 
-// clientIP prefere o 1o IP do X-Forwarded-For (atrás do proxy do Fly),
-// senão o host do RemoteAddr.
+// clientIP prefers the first X-Forwarded-For hop (behind Fly's proxy) and falls
+// back to the RemoteAddr host.
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		if i := strings.IndexByte(xff, ','); i >= 0 {
@@ -72,15 +75,15 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
-// limiter compartilhado pelas rotas de escrita: 2 req/s por IP, rajada de 10.
-// Folgado pro uso real (ESP32 posta a cada ~5s), mas corta flood.
+// writeLimiter is shared by the write routes: 2 req/s per IP, burst of 10.
+// Generous for real use (the device posts every ~5s) but enough to cut floods.
 var writeLimiter = newIPRateLimiter(2, 10)
 
-// rateLimit responde 429 quando o IP estoura o limite, senão segue.
+// rateLimit responds 429 when the IP exceeds its limit, otherwise calls next.
 func rateLimit(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !writeLimiter.allow(clientIP(r)) {
-			writeJSONError(w, http.StatusTooManyRequests, "muitas requisições, tente novamente em instantes")
+			writeJSONError(w, http.StatusTooManyRequests, "too many requests, try again shortly")
 			return
 		}
 		next(w, r)

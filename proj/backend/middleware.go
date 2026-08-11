@@ -1,7 +1,4 @@
-//verificação do X-API-Key
-
-//closure: requireAPIKey recebe o handler (next) e devolve outro que "lembra" ele
-//middleware roda antes do handler; só chama next(w,r) se a API key bater, senão 401 e para ali
+// API-key authentication, CORS and shared HTTP helpers.
 
 package main
 
@@ -12,12 +9,14 @@ import (
 	"os"
 )
 
-// projeto pessoal: chave fixa em código, não depende de setar env var toda vez que roda.
-// se um dia isso for exposto fora do localhost, trocar por uma chave forte via API_KEY.
+// defaultAPIKey is the development fallback used when API_KEY is unset. It must
+// never be relied on in production; set a strong API_KEY instead.
 const defaultAPIKey = "zica123"
 
 var apiKey = getAPIKey()
 
+// getAPIKey returns the key from the API_KEY environment variable, or the
+// development default when it is unset.
 func getAPIKey() string {
 	if key := os.Getenv("API_KEY"); key != "" {
 		return key
@@ -25,10 +24,10 @@ func getAPIKey() string {
 	return defaultAPIKey
 }
 
-// se ALLOWED_ORIGIN não estiver setada, cai pra "*" (dev local, teste no Chrome).
-// em produção, setar ALLOWED_ORIGIN com o domínio real do app pra travar o CORS.
 var allowedOrigin = getAllowedOrigin()
 
+// getAllowedOrigin returns the allowed CORS origin from ALLOWED_ORIGIN, or "*"
+// for local development. Set it to the app's domain in production.
 func getAllowedOrigin() string {
 	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
 		return origin
@@ -36,43 +35,39 @@ func getAllowedOrigin() string {
 	return "*"
 }
 
-// writeJSONError centraliza a resposta de erro: garante Content-Type application/json
-// antes do status (senão o cliente recebe o JSON marcado como text/plain).
+// writeJSONError writes msg as a JSON error body, setting Content-Type before
+// the status so the response is not mislabeled as text/plain.
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
+// requireAPIKey wraps next and rejects requests whose X-API-Key header does not
+// match, comparing in constant time to avoid a timing side channel.
 func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
-	//devolve o handler de verdade que substitui "next" nas rotas
 	return func(w http.ResponseWriter, r *http.Request) {
-		//pega a API key do header
 		apikey := r.Header.Get("X-API-KEY")
 
-		//compara em tempo constante (evita timing attack)
 		if subtle.ConstantTimeCompare([]byte(apikey), []byte(apiKey)) != 1 {
-			//não bateu: 401 e para aqui, next nunca roda (Header().Set antes do WriteHeader, senão é ignorado)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 			return
 		}
 
-		//bateu: segue pro handler de verdade
 		next(w, r)
 	}
 }
 
-// CORS é regra do navegador, não do servidor — sem esse header o Chrome bloqueia a resposta
-// ESP32 e o app nativo no celular não passam por essa regra, é 100% coisa de browser
+// withCORS adds the CORS headers browsers require and short-circuits preflight
+// OPTIONS requests. Non-browser clients (the device, native apps) are unaffected.
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin) //configurável via ALLOWED_ORIGIN; default "*" pra dev local
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
 
-		//OPTIONS = preflight do navegador perguntando "posso?"; responde 200 vazio e para aqui
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return

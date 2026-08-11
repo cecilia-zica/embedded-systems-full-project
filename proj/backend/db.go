@@ -1,4 +1,4 @@
-//SQLite: conexão + CREATE TABLE
+// SQLite connection setup and schema creation.
 
 package main
 
@@ -7,39 +7,41 @@ import (
 	"log"
 	"os"
 
-	_ "modernc.org/sqlite" //registra o driver
+	_ "modernc.org/sqlite" // registers the driver
 )
 
 var db *sql.DB
 
+// initDB opens the SQLite database, verifies the connection and creates the
+// schema when missing. It fails fast (log.Fatal) on any error.
 func initDB() {
 	var err error
 
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = "./app.db" //fallback pra rodar local, fora do Docker
+		dbPath = "./app.db" // local fallback when running outside Docker
 	}
 
-	//WAL + busy_timeout evitam "database is locked" quando o ESP32 grava
-	//(POST /logging a cada ~5s) enquanto o app lê/apaga ao mesmo tempo.
+	// WAL plus a busy_timeout avoid "database is locked" when the device writes
+	// (POST /logging every ~5s) while the app reads or deletes concurrently.
 	dsn := dbPath + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
-	db, err = sql.Open("sqlite", dsn) //abre a conexão
+	db, err = sql.Open("sqlite", dsn)
 
-	if err != nil {
-		log.Fatal(err) //lança erro e encerra com 1
-	}
-
-	//SQLite só aceita 1 escritor por vez; serializar as conexões troca erros
-	//de lock por uma pequena espera, previsível e segura pra esta escala.
-	db.SetMaxOpenConns(1)
-
-	//teste com db.Ping()
-	err = db.Ping() //verifica se a conexão está ativa, boa prática
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//create table confg
+	// SQLite allows a single writer; serializing connections trades lock errors
+	// for a short, predictable wait, which is safe at this scale.
+	db.SetMaxOpenConns(1)
+
+	// verify the connection is alive
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// config: single row (id = 1) holding the alert settings
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS config (
 			id INTEGER PRIMARY KEY default 1,
@@ -52,7 +54,7 @@ func initDB() {
 		log.Fatal(err)
 	}
 
-	//create table logs
+	// logs: one row per reading reported by the device
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,12 +64,12 @@ func initDB() {
 			user_id TEXT NOT NULL default 'unknown',
 			created_at DATETIME default CURRENT_TIMESTAMP
 		)
-	`) //cada leitura -> update novo
+	`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// insert or ignore leituras
+	// seed the single config row if it isn't there yet
 	_, err = db.Exec(`INSERT OR IGNORE INTO config (id) VALUES (1)`)
 	if err != nil {
 		log.Fatal(err)

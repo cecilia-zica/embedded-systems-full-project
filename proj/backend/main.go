@@ -1,5 +1,5 @@
-//entry point: rotas + servidor :8080
-
+// Command backend is the monitoring API: a small HTTP service backed by SQLite
+// that stores device readings and serves the alert configuration.
 package main
 
 import (
@@ -16,58 +16,58 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Health check: sem auth, usado pelo Docker/orquestrador pra saber se subiu
+	// Health check: unauthenticated, used by Docker/orchestrators for readiness.
 	mux.HandleFunc("GET /healthz", handleHealthz)
 
-	// Rotas do serviço de Logging (escrita passa pelo rate limiter por IP)
+	// Logging service (writes go through the per-IP rate limiter).
 	mux.HandleFunc("POST /api/v1/logging", rateLimit(requireAPIKey(handlePostLogging)))
 	mux.HandleFunc("GET /api/v1/logging", requireAPIKey(handleGetLogging))
 	mux.HandleFunc("DELETE /api/v1/logging", rateLimit(requireAPIKey(handleDeleteLogging)))
 
-	// Rotas do serviço de Controle
+	// Config service.
 	mux.HandleFunc("GET /api/v1/controle", requireAPIKey(handleGetControle))
 	mux.HandleFunc("POST /api/v1/controle", rateLimit(requireAPIKey(handlePostControle)))
 
-	//servidor com timeouts em vez de ListenAndServe puro
+	// Explicit timeouts instead of a bare ListenAndServe.
 	server := &http.Server{
 		Addr:              ":8080",
 		Handler:           withCORS(mux),
-		ReadHeaderTimeout: 5 * time.Second,  //cliente terminar headers de requisicao
-		ReadTimeout:       10 * time.Second, //ler reqs
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second, //conection pode ficar aberta ate 1 min
+		IdleTimeout:       60 * time.Second,
 	}
 
-	//graceful shutdown: no SIGINT/SIGTERM, para de aceitar conexões novas e
-	//deixa as requisições em voo terminarem antes de fechar o processo.
+	// Graceful shutdown: on SIGINT/SIGTERM, stop accepting new connections and
+	// let in-flight requests drain before exiting.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	go func() {
-		log.Println("Servidor rodando em :8080")
+		log.Println("server listening on :8080")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
 	}()
 
-	<-ctx.Done() //bloqueia até chegar um sinal de encerramento
-	log.Println("Encerrando servidor...")
+	<-ctx.Done() // block until a termination signal arrives
+	log.Println("shutting down server...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("shutdown forçado: %v", err)
+		log.Printf("forced shutdown: %v", err)
 	}
 	if db != nil {
 		db.Close()
 	}
-	log.Println("Servidor encerrado com sucesso.")
+	log.Println("server shut down cleanly")
 }
 
-// handleHealthz: 200 se o processo está de pé e o banco responde.
+// handleHealthz returns 200 when the process is up and the database responds.
 func handleHealthz(w http.ResponseWriter, r *http.Request) {
 	if db == nil || db.Ping() != nil {
-		http.Error(w, "db indisponível", http.StatusServiceUnavailable)
+		http.Error(w, "database unavailable", http.StatusServiceUnavailable)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
