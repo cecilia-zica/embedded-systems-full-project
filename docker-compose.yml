@@ -3,17 +3,17 @@ services:
     build: ./proj/backend
     ports:
       - "8080:8080"
-    # volume nomeado (não bind mount) porque o container roda como usuário
-    # não-root: o Dockerfile já dá chown de /data pro usuário app, o que não
-    # funcionaria com uma pasta do host. O SQLite sobrevive a `docker compose down`.
+    # Named volume (not a bind mount) because the container runs as a non-root
+    # user: the Dockerfile chowns /data to the app user, which wouldn't work
+    # with a host folder. The SQLite data survives `docker compose down`.
     volumes:
       - backend-data:/data
     environment:
       - DB_PATH=/data/app.db
-      # API_KEY e ALLOWED_ORIGIN têm default no código (zica123 / "*").
-      # Em produção, defina uma chave forte e trave o CORS no domínio do app:
-      # - API_KEY=troque-esta-chave
-      # - ALLOWED_ORIGIN=https://seu-app.exemplo.com
+      # API_KEY and ALLOWED_ORIGIN default in the code (zica123 / "*").
+      # In production, set a strong key and lock CORS to the app's domain:
+      # - API_KEY=change-this-key
+      # - ALLOWED_ORIGIN=https://your-app.example.com
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
