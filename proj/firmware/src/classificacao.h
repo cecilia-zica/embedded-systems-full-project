@@ -1,7 +1,7 @@
 #pragma once
 
-// se você já incluiu esse arquivo antes (nesse mesmo arquivo final), não inclua de novo
+// Classification of a single reading.
 struct Classificacao {
-  int classe;      // 0=Normal, 1=Alerta, 2=Erro
-  float confianca; // 0.0 a 1.0
+  int classe;      // 0=normal, 1=alert, 2=error
+  float confianca; // 0.0 to 1.0
 };
