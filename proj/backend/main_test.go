@@ -104,14 +104,14 @@ func TestConfigRoundTrip(t *testing.T) {
 	body := `{"bpm_threshold":120,"alert_enabled":true}`
 	postRec := httptest.NewRecorder()
 	postReq := httptest.NewRequest(http.MethodPost, "/api/v1/controle", strings.NewReader(body))
-	handlePostControle(postRec, postReq)
+	handlePostConfig(postRec, postReq)
 	if postRec.Code != http.StatusOK {
 		t.Fatalf("POST controle: expected 200, got %d (%s)", postRec.Code, postRec.Body)
 	}
 
 	getRec := httptest.NewRecorder()
 	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/controle", nil)
-	handleGetControle(getRec, getReq)
+	handleGetConfig(getRec, getReq)
 	if getRec.Code != http.StatusOK {
 		t.Fatalf("GET controle: expected 200, got %d", getRec.Code)
 	}
@@ -124,13 +124,13 @@ func TestConfigRoundTrip(t *testing.T) {
 	}
 }
 
-// TestPostControleRejectsNonPositiveThreshold expects threshold <= 0 to yield 400.
-func TestPostControleRejectsNonPositiveThreshold(t *testing.T) {
+// TestPostConfigRejectsNonPositiveThreshold expects threshold <= 0 to yield 400.
+func TestPostConfigRejectsNonPositiveThreshold(t *testing.T) {
 	setupTestDB(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/controle", strings.NewReader(`{"bpm_threshold":0}`))
-	handlePostControle(rec, req)
+	handlePostConfig(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for threshold 0, got %d", rec.Code)
 	}

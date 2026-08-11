@@ -25,8 +25,8 @@ func main() {
 	mux.HandleFunc("DELETE /api/v1/logging", rateLimit(requireAPIKey(handleDeleteLogging)))
 
 	// Config service.
-	mux.HandleFunc("GET /api/v1/controle", requireAPIKey(handleGetControle))
-	mux.HandleFunc("POST /api/v1/controle", rateLimit(requireAPIKey(handlePostControle)))
+	mux.HandleFunc("GET /api/v1/controle", requireAPIKey(handleGetConfig))
+	mux.HandleFunc("POST /api/v1/controle", rateLimit(requireAPIKey(handlePostConfig)))
 
 	// Explicit timeouts instead of a bare ListenAndServe.
 	server := &http.Server{

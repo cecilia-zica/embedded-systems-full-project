@@ -13,8 +13,8 @@ type Config struct {
 	AlertEnabled bool `json:"alert_enabled"`
 }
 
-// handleGetControle returns the current configuration as JSON.
-func handleGetControle(w http.ResponseWriter, r *http.Request) {
+// handleGetConfig returns the current configuration as JSON.
+func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	var cfg Config
 	var alertEnabledInt int
 
@@ -30,9 +30,9 @@ func handleGetControle(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(cfg)
 }
 
-// handlePostControle validates a configuration from the request body and
+// handlePostConfig validates a configuration from the request body and
 // persists it.
-func handlePostControle(w http.ResponseWriter, r *http.Request) {
+func handlePostConfig(w http.ResponseWriter, r *http.Request) {
 	var req Config
 
 	// cap the body at 1 MB (same rationale as handlePostLogging)
