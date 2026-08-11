@@ -13,7 +13,7 @@ class LogsScreen extends StatefulWidget {
 class _LogsScreenState extends State<LogsScreen> {
   List<dynamic> _logs = [];
   bool _loading = true;
-  String? _erro;
+  String? _error;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _LogsScreenState extends State<LogsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _erro = e.toString();
+        _error = e.toString();
         _loading = false;
       });
     } finally {
@@ -47,8 +47,8 @@ class _LogsScreenState extends State<LogsScreen> {
   }
 
   /// Clears the entire history after confirmation; the deletion is irreversible.
-  Future<void> _confirmarLimparLogs() async {
-    final confirmou = await showDialog<bool>(
+  Future<void> _confirmClearLogs() async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Limpar log?'),
@@ -64,7 +64,7 @@ class _LogsScreenState extends State<LogsScreen> {
         ],
       ),
     );
-    if (confirmou != true) return;
+    if (confirmed != true) return;
 
     try {
       await ApiService.deleteLogs();
@@ -168,9 +168,9 @@ class _LogsScreenState extends State<LogsScreen> {
 
     if (_loading) {
       body = const Center(child: CircularProgressIndicator());
-    } else if (_erro != null) {
+    } else if (_error != null) {
       // TODO: friendlier error message with a retry button.
-      body = Center(child: Text('Erro: $_erro'));
+      body = Center(child: Text('Erro: $_error'));
     } else if (_logs.isEmpty) {
       body = const Center(child: Text('Nenhuma leitura ainda'));
     } else {
@@ -182,13 +182,13 @@ class _LogsScreenState extends State<LogsScreen> {
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final log = _logs[index] as Map<String, dynamic>;
-            final classe = log['class'] as int;
+            final cls = log['class'] as int;
             return ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               leading: CircleAvatar(
-                backgroundColor: _classToColor(classe).withOpacity(0.15),
-                child: Icon(Icons.favorite, color: _classToColor(classe)),
+                backgroundColor: _classToColor(cls).withOpacity(0.15),
+                child: Icon(Icons.favorite, color: _classToColor(cls)),
               ),
               title: Text(
                 '${log['bpm']} BPM   ·   SpO2 ${log['spo2']}%',
@@ -198,10 +198,10 @@ class _LogsScreenState extends State<LogsScreen> {
                 '${log['user_id']} — ${_formatTimestamp(log['created_at'] as String)}',
               ),
               trailing: Chip(
-                label: Text(_classToText(classe)),
-                backgroundColor: _classToColor(classe).withOpacity(0.15),
+                label: Text(_classToText(cls)),
+                backgroundColor: _classToColor(cls).withOpacity(0.15),
                 labelStyle: TextStyle(
-                  color: _classToColor(classe),
+                  color: _classToColor(cls),
                   fontWeight: FontWeight.w600,
                 ),
                 side: BorderSide.none,
@@ -219,7 +219,7 @@ class _LogsScreenState extends State<LogsScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchLogs),
           IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: _confirmarLimparLogs),
+              onPressed: _confirmClearLogs),
         ],
       ),
       // Keep the legend pinned above the scrolling list.

@@ -33,17 +33,17 @@ class HomeNav extends StatefulWidget {
 }
 
 class _HomeNavState extends State<HomeNav> {
-  int _indiceAtual = 0;
+  int _currentIndex = 0;
 
-  static const List<Widget> _telas = [LogsScreen(), ConfigScreen()];
+  static const List<Widget> _screens = [LogsScreen(), ConfigScreen()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _telas[_indiceAtual],
+      body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _indiceAtual,
-        onTap: (index) => setState(() => _indiceAtual = index),
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Logs'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Config'),
