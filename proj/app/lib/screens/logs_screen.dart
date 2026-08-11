@@ -222,8 +222,7 @@ class _LogsScreenState extends State<LogsScreen> {
               onPressed: _confirmarLimparLogs),
         ],
       ),
-      // Keep the legend pinned above the scrolling list instead of scrolling
-      // together with the log items.
+      // Keep the legend pinned above the scrolling list.
       body: Column(
         children: [
           _buildLedLegend(context),

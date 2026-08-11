@@ -14,8 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Monitor Cardíaco',
       theme: ThemeData(
-        // fromSeed derives the full palette from a single color; without it
-        // Material 3 ignores primarySwatch and falls back to the default purple.
+        // fromSeed derives the full Material 3 palette from a single color.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(centerTitle: true, elevation: 1),

@@ -2,22 +2,15 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-/// HTTP client for the monitoring backend.
-///
-/// Centralizes every API call so widgets depend only on these methods. All
-/// routes require the `X-API-Key` header.
+/// HTTP client for the monitoring backend. All routes require `X-API-Key`.
 class ApiService {
-  /// Backend base URL, injected at build time via `--dart-define=API_BASE_URL`.
-  ///
-  /// The default targets local development and can be overridden per build.
+  /// Backend base URL, set at build time via `--dart-define=API_BASE_URL`.
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://172.20.10.2:8080',
   );
 
-  /// API key sent on every request, injected via `--dart-define=API_KEY`.
-  ///
-  /// Must match the backend's `API_KEY`; the default is for local development.
+  /// API key sent on every request, set via `--dart-define=API_KEY`.
   static const String apiKey = String.fromEnvironment(
     'API_KEY',
     defaultValue: 'zica123',

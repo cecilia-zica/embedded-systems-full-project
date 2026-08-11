@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 
-/// Screen for viewing and editing the alert threshold (`bpm_threshold`) that
-/// the device polls from the backend.
+/// Views and edits the alert threshold (`bpm_threshold`) the device polls.
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
 
@@ -26,9 +25,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   Future<void> _loadCurrentConfig() async {
     try {
       final config = await ApiService.getConfig();
-      // Guard against setState after the widget was disposed (e.g. the tab was
-      // switched before the response arrived).
-      if (!mounted) return;
+      if (!mounted) return; // avoid setState after dispose
       setState(() {
         _thresholdController.text = config['bpm_threshold'].toString();
         _alertEnabled = config['alert_enabled'] as bool;
@@ -44,8 +41,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Future<void> _saveConfig() async {
-    // tryParse returns null instead of throwing on invalid input, so validate
-    // before spending a network round-trip.
+    // Validate before the network call; tryParse returns null if invalid.
     final threshold = int.tryParse(_thresholdController.text);
     if (threshold == null) {
       ScaffoldMessenger.of(context).showSnackBar(
