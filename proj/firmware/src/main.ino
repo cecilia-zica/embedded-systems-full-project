@@ -18,56 +18,56 @@
 
 const unsigned long WIFI_TIMEOUT_MS = 15000; // give up after this and run offline
 
-const int PINO_LED = 13; // active-high: HIGH = on, LOW = off
+const int LED_PIN = 13; // active-high: HIGH = on, LOW = off
 
 int bpmThreshold = 40; // initial value until the first backend response
 bool alertEnabled = true;
 
 // 50000 alone can't tell a finger from a surface reflecting light; it's just a
-// cheap gate. The real check is dedoConfirmado() (signal variation).
-const long IR_DEDO_PRESENTE = 50000;
+// cheap gate. The real check is fingerConfirmed() (signal variation).
+const long IR_FINGER_PRESENT = 50000;
 // ~4s: a heartbeat lasts 0.6-1s, enough to catch 1-2 cycles before deciding.
-const unsigned long DURACAO_CONFIRMACAO_MS = 4000;
-const int INTERVALO_AMOSTRA_MS = 20;
+const unsigned long CONFIRM_DURATION_MS = 4000;
+const int SAMPLE_INTERVAL_MS = 20;
 // A finger varies the IR with the heartbeat; a table/box reflects steady light.
 // This module's noise alone already reached 500-2900 (measured with no finger),
 // hence 3000.
-const long VARIACAO_MINIMA = 3000;
-const unsigned long INTERVALO_ENVIO = 5000;
+const long MIN_VARIATION = 3000;
+const unsigned long SEND_INTERVAL = 5000;
 const unsigned long CONFIG_INTERVAL_MS = 10000; // how often to poll the backend config
 
-const int MEIO_PERIODO_RAPIDO = 80; // fast blink = inconsistent reading
-const int MEIO_PERIODO_LENTO = 250; // slow blink = normal reading
-const int ALERTA_BLINK_ON = 100;    // 2 blinks + pause = alert
-const int ALERTA_PAUSA = 400;
+const int HALF_PERIOD_FAST = 80; // fast blink = inconsistent reading
+const int HALF_PERIOD_SLOW = 250; // slow blink = normal reading
+const int ALERT_BLINK_ON = 100;    // 2 blinks + pause = alert
+const int ALERT_PAUSE = 400;
 
 MAX30105 particleSensor;
 
 long lastBeat = 0;
-float bpmAtual = 0;
-unsigned long ultimaConfigMs = 0;
+float currentBpm = 0;
+unsigned long lastConfigMs = 0;
 
 // Noise also triggers checkForBeat but jumps around between beats
 // (61, 107, 86, 130... measured with no finger); only accept after RATE_SIZE
 // beats agree.
 const byte RATE_SIZE = 4;
-float taxasBpm[RATE_SIZE];
-byte indiceTaxa = 0;
-byte contagemTaxas = 0;
+float bpmRates[RATE_SIZE];
+byte rateIndex = 0;
+byte rateCount = 0;
 
-void ledOn() { digitalWrite(PINO_LED, HIGH); }
-void ledOff() { digitalWrite(PINO_LED, LOW); }
+void ledOn() { digitalWrite(LED_PIN, HIGH); }
+void ledOff() { digitalWrite(LED_PIN, LOW); }
 
 // Cheap check used inside the read loop so it doesn't block; it can't tell a
 // finger from a surface reflecting light.
-bool dedoPresente() {
-  return particleSensor.getIR() >= IR_DEDO_PRESENTE;
+bool fingerPresent() {
+  return particleSensor.getIR() >= IR_FINGER_PRESENT;
 }
 
 // GET /controle: refresh bpmThreshold/alertEnabled with what the app saved.
 // Parsed by hand because there are only two fixed fields; a JSON library isn't
 // worth the cost.
-void buscarConfig() {
+void fetchConfig() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
@@ -77,10 +77,10 @@ void buscarConfig() {
 
   int status = http.GET();
   if (status == 200) {
-    String corpo = http.getString();
-    int i = corpo.indexOf("\"bpm_threshold\":");
-    if (i != -1) bpmThreshold = corpo.substring(i + 16).toInt();
-    alertEnabled = corpo.indexOf("\"alert_enabled\":true") != -1;
+    String body = http.getString();
+    int i = body.indexOf("\"bpm_threshold\":");
+    if (i != -1) bpmThreshold = body.substring(i + 16).toInt();
+    alertEnabled = body.indexOf("\"alert_enabled\":true") != -1;
     Serial.printf("CONFIG: bpmThreshold=%d alertEnabled=%d\n", bpmThreshold, alertEnabled);
   } else {
     Serial.printf("CONFIG: fetch failed (status=%d), keeping current values\n", status);
@@ -90,57 +90,57 @@ void buscarConfig() {
 
 // Only refetches after CONFIG_INTERVAL_MS; called from within the states so the
 // sensor never blocks waiting on the network.
-void atualizarConfigSePreciso() {
-  if (millis() - ultimaConfigMs < CONFIG_INTERVAL_MS) return;
-  ultimaConfigMs = millis();
-  buscarConfig();
+void refreshConfigIfDue() {
+  if (millis() - lastConfigMs < CONFIG_INTERVAL_MS) return;
+  lastConfigMs = millis();
+  fetchConfig();
 }
 
-// The real confirmation (only in semDedo, needn't be fast): watch ~4s; a real
+// The real confirmation (only in waitForFinger, needn't be fast): watch ~4s; a real
 // finger varies the IR with the heartbeat, a table/box stays constant.
-bool dedoConfirmado() {
-  if (!dedoPresente()) return false;
+bool fingerConfirmed() {
+  if (!fingerPresent()) return false;
 
   long minIR = 999999, maxIR = 0; // MAX30105 is an 18-bit ADC, IR never exceeds ~262143
-  unsigned long fim = millis() + DURACAO_CONFIRMACAO_MS;
-  while (millis() < fim) {
-    if (!dedoPresente()) return false; // removed mid-way, cancel the confirmation
+  unsigned long end = millis() + CONFIRM_DURATION_MS;
+  while (millis() < end) {
+    if (!fingerPresent()) return false; // removed mid-way, cancel the confirmation
 
-    long amostra = particleSensor.getIR();
-    if (amostra < minIR) minIR = amostra;
-    if (amostra > maxIR) maxIR = amostra;
+    long sample = particleSensor.getIR();
+    if (sample < minIR) minIR = sample;
+    if (sample > maxIR) maxIR = sample;
 
-    atualizarConfigSePreciso();
-    delay(INTERVALO_AMOSTRA_MS);
+    refreshConfigIfDue();
+    delay(SAMPLE_INTERVAL_MS);
   }
-  return (maxIR - minIR) >= VARIACAO_MINIMA;
+  return (maxIR - minIR) >= MIN_VARIATION;
 }
 
-void piscarRitmo(int meioPeriodoMs, unsigned long duracaoMs) {
-  unsigned long fim = millis() + duracaoMs;
-  while (millis() < fim) {
+void blinkRhythm(int halfPeriodMs, unsigned long durationMs) {
+  unsigned long end = millis() + durationMs;
+  while (millis() < end) {
     ledOn();
-    delay(meioPeriodoMs);
+    delay(halfPeriodMs);
     ledOff();
-    delay(meioPeriodoMs);
+    delay(halfPeriodMs);
   }
 }
 
-void piscarAlerta(unsigned long duracaoMs) {
-  unsigned long fim = millis() + duracaoMs;
-  while (millis() < fim) {
+void blinkAlert(unsigned long durationMs) {
+  unsigned long end = millis() + durationMs;
+  while (millis() < end) {
     for (int i = 0; i < 2; i++) {
       ledOn();
-      delay(ALERTA_BLINK_ON);
+      delay(ALERT_BLINK_ON);
       ledOff();
-      delay(ALERTA_BLINK_ON);
+      delay(ALERT_BLINK_ON);
     }
-    delay(ALERTA_PAUSA);
+    delay(ALERT_PAUSE);
   }
 }
 
 // Rough estimate, not the official clinical algorithm.
-float estimarSpO2() {
+float estimateSpO2() {
   long redValue = particleSensor.getRed();
   long irValue = particleSensor.getIR();
   if (irValue == 0) return 0;
@@ -152,9 +152,9 @@ float estimarSpO2() {
   return spo2;
 }
 
-// Fixed rule for now (see TINYML.md); SpO2 is excluded because estimarSpO2()
+// Fixed rule for now (see TINYML.md); SpO2 is excluded because estimateSpO2()
 // reads 85-87% even with a good signal, not reliable enough.
-int classificar(float bpm, float spo2) {
+int classify(float bpm, float spo2) {
   if (bpm < 15.0 || bpm > 220.0) return 2;          // error
   if (alertEnabled && bpm > bpmThreshold) return 1; // alert
   return 0;                                         // normal
@@ -162,49 +162,49 @@ int classificar(float bpm, float spo2) {
 
 // ---- states ----
 
-// Cheap wait with no IR; once a finger appears, confirm for ~4s (dedoConfirmado)
+// Cheap wait with no IR; once a finger appears, confirm for ~4s (fingerConfirmed)
 // before accepting it.
-void semDedo() {
+void waitForFinger() {
   ledOff();
-  while (!dedoConfirmado()) {
-    atualizarConfigSePreciso();
+  while (!fingerConfirmed()) {
+    refreshConfigIfDue();
     delay(50);
   }
   ledOn(); // finger confirmed: LED stays on while reading the heartbeat
 }
 
 // Requires RATE_SIZE consecutive beats within 30% of the mean, filtering noise
-// that slipped past dedoConfirmado.
-void lendoBatimento() {
-  bpmAtual = 0;
-  contagemTaxas = 0;
+// that slipped past fingerConfirmed.
+void readHeartbeat() {
+  currentBpm = 0;
+  rateCount = 0;
 
-  while (bpmAtual == 0) {
-    atualizarConfigSePreciso();
-    if (!dedoPresente()) return; // finger removed: back to semDedo
+  while (currentBpm == 0) {
+    refreshConfigIfDue();
+    if (!fingerPresent()) return; // finger removed: back to waitForFinger
 
     if (checkForBeat(particleSensor.getIR())) {
-      long agora = millis();
-      float bpmInstantaneo = 60000.0 / (agora - lastBeat);
-      lastBeat = agora;
+      long now = millis();
+      float instantBpm = 60000.0 / (now - lastBeat);
+      lastBeat = now;
 
-      if (bpmInstantaneo > 20 && bpmInstantaneo < 255) {
-        taxasBpm[indiceTaxa++] = bpmInstantaneo;
-        indiceTaxa %= RATE_SIZE;
-        if (contagemTaxas < RATE_SIZE) contagemTaxas++;
+      if (instantBpm > 20 && instantBpm < 255) {
+        bpmRates[rateIndex++] = instantBpm;
+        rateIndex %= RATE_SIZE;
+        if (rateCount < RATE_SIZE) rateCount++;
 
-        if (contagemTaxas == RATE_SIZE) {
-          float soma = 0, minTaxa = 999, maxTaxa = 0;
+        if (rateCount == RATE_SIZE) {
+          float sum = 0, minRate = 999, maxRate = 0;
           for (byte i = 0; i < RATE_SIZE; i++) {
-            soma += taxasBpm[i];
-            if (taxasBpm[i] < minTaxa) minTaxa = taxasBpm[i];
-            if (taxasBpm[i] > maxTaxa) maxTaxa = taxasBpm[i];
+            sum += bpmRates[i];
+            if (bpmRates[i] < minRate) minRate = bpmRates[i];
+            if (bpmRates[i] > maxRate) maxRate = bpmRates[i];
           }
-          float media = soma / RATE_SIZE;
-          if ((maxTaxa - minTaxa) <= media * 0.3) {
-            bpmAtual = media;
+          float mean = sum / RATE_SIZE;
+          if ((maxRate - minRate) <= mean * 0.3) {
+            currentBpm = mean;
           } else {
-            contagemTaxas = 0; // inconsistent, discard and restart the series
+            rateCount = 0; // inconsistent, discard and restart the series
           }
         }
       }
@@ -214,7 +214,7 @@ void lendoBatimento() {
 
 // POST to the backend; with no WiFi it only warns on serial (the reading was
 // already printed above).
-void enviarLog(float bpm, float spo2, int classe) {
+void sendLog(float bpm, float spo2, int cls) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("-> backend: no WiFi, not sent (serial only).");
     return;
@@ -226,39 +226,39 @@ void enviarLog(float bpm, float spo2, int classe) {
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-API-Key", API_KEY);
 
-  char corpo[128];
-  snprintf(corpo, sizeof(corpo),
+  char body[128];
+  snprintf(body, sizeof(body),
            "{\"bpm\":%.1f,\"spo2\":%.1f,\"class\":%d}",
-           bpm, spo2, classe);
+           bpm, spo2, cls);
 
-  int status = http.POST(corpo);
+  int status = http.POST(body);
   Serial.printf("-> backend: status=%d\n", status);
   http.end();
 }
 
-void classificarEEnviar() {
-  float spo2 = estimarSpO2();
-  int classe = classificar(bpmAtual, spo2);
+void classifyAndSend() {
+  float spo2 = estimateSpO2();
+  int cls = classify(currentBpm, spo2);
 
-  Serial.printf("READING,%.1f,%.1f,%d\n", bpmAtual, spo2, classe);
-  enviarLog(bpmAtual, spo2, classe);
+  Serial.printf("READING,%.1f,%.1f,%d\n", currentBpm, spo2, cls);
+  sendLog(currentBpm, spo2, cls);
 
-  switch (classe) {
-    case 2: piscarRitmo(MEIO_PERIODO_RAPIDO, INTERVALO_ENVIO); break;
-    case 1: piscarAlerta(INTERVALO_ENVIO); break;
-    default: piscarRitmo(MEIO_PERIODO_LENTO, INTERVALO_ENVIO);
+  switch (cls) {
+    case 2: blinkRhythm(HALF_PERIOD_FAST, SEND_INTERVAL); break;
+    case 1: blinkAlert(SEND_INTERVAL); break;
+    default: blinkRhythm(HALF_PERIOD_SLOW, SEND_INTERVAL);
   }
 }
 
 // Connects with a timeout; on failure it runs offline (sensor + serial keep going).
-void conectarWiFi() {
+void connectWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.setTxPower(WIFI_POWER_8_5dBm); // lowers the radio current peak (see note on top)
-  WiFi.begin(WIFI_SSID, WIFI_SENHA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.printf("Connecting to WiFi '%s'", WIFI_SSID);
-  unsigned long inicio = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - inicio < WIFI_TIMEOUT_MS) {
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_TIMEOUT_MS) {
     delay(300);
     Serial.print(".");
   }
@@ -274,12 +274,12 @@ void conectarWiFi() {
 
 void setup() {
   Serial.begin(115200);
-  pinMode(PINO_LED, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
   ledOff();
 
-  conectarWiFi();
-  buscarConfig(); // initial config, before the first read cycle
-  ultimaConfigMs = millis();
+  connectWiFi();
+  fetchConfig(); // initial config, before the first read cycle
+  lastConfigMs = millis();
 
   Wire.begin();
   Wire.setTimeOut(200); // avoids blocking forever if a wire comes loose
@@ -288,9 +288,9 @@ void setup() {
     Serial.println("ERROR: MAX30102 not found!");
     while (1) { // blink fast forever = broken hardware
       ledOn();
-      delay(MEIO_PERIODO_RAPIDO);
+      delay(HALF_PERIOD_FAST);
       ledOff();
-      delay(MEIO_PERIODO_RAPIDO);
+      delay(HALF_PERIOD_FAST);
     }
   }
   particleSensor.setup();
@@ -300,15 +300,15 @@ void setup() {
   Serial.println("Ready. Place your finger to measure.");
 }
 
-// Old bug: every reading returned to the full semDedo(), which reconfirms ~4s of
+// Old bug: every reading returned to the full waitForFinger(), which reconfirms ~4s of
 // variation; a still finger might never cross the threshold and the LED stayed
-// off, looking stuck. Now it confirms once and keeps reading while dedoPresente().
+// off, looking stuck. Now it confirms once and keeps reading while fingerPresent().
 void loop() {
-  semDedo();
-  while (dedoPresente()) {
-    lendoBatimento();
-    if (bpmAtual == 0) break; // finger left mid-reading
-    classificarEEnviar();
+  waitForFinger();
+  while (fingerPresent()) {
+    readHeartbeat();
+    if (currentBpm == 0) break; // finger left mid-reading
+    classifyAndSend();
   }
 }
 
