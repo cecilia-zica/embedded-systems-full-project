@@ -97,23 +97,23 @@ func TestPostLoggingRejectsOutOfRange(t *testing.T) {
 	}
 }
 
-// TestConfigRoundTrip verifies what POST /controle saves is read back on GET.
+// TestConfigRoundTrip verifies what POST /config saves is read back on GET.
 func TestConfigRoundTrip(t *testing.T) {
 	setupTestDB(t)
 
 	body := `{"bpm_threshold":120,"alert_enabled":true}`
 	postRec := httptest.NewRecorder()
-	postReq := httptest.NewRequest(http.MethodPost, "/api/v1/controle", strings.NewReader(body))
+	postReq := httptest.NewRequest(http.MethodPost, "/api/v1/config", strings.NewReader(body))
 	handlePostConfig(postRec, postReq)
 	if postRec.Code != http.StatusOK {
-		t.Fatalf("POST controle: expected 200, got %d (%s)", postRec.Code, postRec.Body)
+		t.Fatalf("POST config: expected 200, got %d (%s)", postRec.Code, postRec.Body)
 	}
 
 	getRec := httptest.NewRecorder()
-	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/controle", nil)
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/config", nil)
 	handleGetConfig(getRec, getReq)
 	if getRec.Code != http.StatusOK {
-		t.Fatalf("GET controle: expected 200, got %d", getRec.Code)
+		t.Fatalf("GET config: expected 200, got %d", getRec.Code)
 	}
 	var cfg Config
 	if err := json.Unmarshal(getRec.Body.Bytes(), &cfg); err != nil {
@@ -129,7 +129,7 @@ func TestPostConfigRejectsNonPositiveThreshold(t *testing.T) {
 	setupTestDB(t)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/controle", strings.NewReader(`{"bpm_threshold":0}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/config", strings.NewReader(`{"bpm_threshold":0}`))
 	handlePostConfig(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for threshold 0, got %d", rec.Code)

@@ -1,6 +1,6 @@
 // ESP32 + MAX30102 + WiFi: reads BPM/SpO2, classifies it and POSTs to the backend.
 // bpmThreshold/alertEnabled are refreshed from the backend every
-// CONFIG_INTERVAL_MS (GET /controle).
+// CONFIG_INTERVAL_MS (GET /config).
 // RFID was removed: out of scope and the module never communicated reliably.
 // WiFi: a reduced setTxPower avoids stalling the I2C bus; if it stalls again the
 // cause is power, not code.
@@ -64,14 +64,14 @@ bool fingerPresent() {
   return particleSensor.getIR() >= IR_FINGER_PRESENT;
 }
 
-// GET /controle: refresh bpmThreshold/alertEnabled with what the app saved.
+// GET /config: refresh bpmThreshold/alertEnabled with what the app saved.
 // Parsed by hand because there are only two fixed fields; a JSON library isn't
 // worth the cost.
 void fetchConfig() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
-  String url = String("http://") + BACKEND_HOST + ":" + BACKEND_PORT + "/api/v1/controle";
+  String url = String("http://") + BACKEND_HOST + ":" + BACKEND_PORT + "/api/v1/config";
   http.begin(url);
   http.addHeader("X-API-Key", API_KEY);
 

@@ -53,15 +53,15 @@ object Api {
   def getLogs()(implicit ec: ExecutionContext): Future[List[LogEntry]] =
     request("/api/v1/logging", "GET").flatMap(_.text().toFuture).map(read[List[LogEntry]](_))
 
-  // GET /api/v1/controle — busca a configuração atual
+  // GET /api/v1/config — busca a configuração atual
   def getConfig()(implicit ec: ExecutionContext): Future[Config] =
-    request("/api/v1/controle", "GET").flatMap(_.text().toFuture).map(read[Config](_))
+    request("/api/v1/config", "GET").flatMap(_.text().toFuture).map(read[Config](_))
 
-  // POST /api/v1/controle — salva um novo threshold/alerta.
+  // POST /api/v1/config — salva um novo threshold/alerta.
   // write(Config(...)) serializa a case class pra JSON — o mesmo papel do
   // json.encode({...}) no Dart, mas sem montar o Map na mão.
   def postConfig(threshold: Int, alertEnabled: Boolean)(implicit ec: ExecutionContext): Future[Unit] =
-    request("/api/v1/controle", "POST", Some(write(Config(threshold, alertEnabled)))).map(_ => ())
+    request("/api/v1/config", "POST", Some(write(Config(threshold, alertEnabled)))).map(_ => ())
 
   // DELETE /api/v1/logging — apaga todo o histórico de leituras
   def deleteLogs()(implicit ec: ExecutionContext): Future[Unit] =

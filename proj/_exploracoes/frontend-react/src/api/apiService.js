@@ -41,15 +41,15 @@ export async function getLogs() {
   return res.json();
 }
 
-// GET /api/v1/controle — busca a configuração atual
+// GET /api/v1/config — busca a configuração atual
 export async function getConfig() {
-  const res = await request('/api/v1/controle');
+  const res = await request('/api/v1/config');
   return res.json();
 }
 
-// POST /api/v1/controle — salva um novo threshold/alerta
+// POST /api/v1/config — salva um novo threshold/alerta
 export async function postConfig(threshold, alertEnabled) {
-  await request('/api/v1/controle', {
+  await request('/api/v1/config', {
     method: 'POST',
     body: JSON.stringify({ bpm_threshold: threshold, alert_enabled: alertEnabled }),
   });

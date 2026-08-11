@@ -44,7 +44,7 @@ flowchart LR
 ```
 
 - O ESP32 faz **POST** de cada leitura em `/api/v1/logging` e consulta
-  **GET** `/api/v1/controle` periodicamente — então mudar o limiar no app reflete
+  **GET** `/api/v1/config` periodicamente — então mudar o limiar no app reflete
   no dispositivo em segundos.
 - O LED do dispositivo codifica o estado (aceso = lendo, pisca devagar = normal,
   pisca rápido = leitura inconsistente, 2 piscadas + pausa = alerta), então dá pra
@@ -114,8 +114,8 @@ Todas as rotas (exceto `/healthz`) exigem o header `X-API-Key`.
 | `POST` | `/api/v1/logging` | Registra uma leitura `{bpm, spo2, class, user_id}` |
 | `GET` | `/api/v1/logging` | Últimas 50 leituras |
 | `DELETE` | `/api/v1/logging` | Limpa o histórico |
-| `GET` | `/api/v1/controle` | Config atual `{bpm_threshold, alert_enabled}` |
-| `POST` | `/api/v1/controle` | Atualiza a config |
+| `GET` | `/api/v1/config` | Config atual `{bpm_threshold, alert_enabled}` |
+| `POST` | `/api/v1/config` | Atualiza a config |
 
 ## Deploy
 

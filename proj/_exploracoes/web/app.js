@@ -23,16 +23,16 @@ const ApiService = {
     return res.json(); // fetch().json() == json.decode() do Dart
   },
 
-  // GET /api/v1/controle — busca a config atual
+  // GET /api/v1/config — busca a config atual
   async getConfig() {
-    const res = await fetch(`${this.baseUrl}/api/v1/controle`, { headers: this.headers });
+    const res = await fetch(`${this.baseUrl}/api/v1/config`, { headers: this.headers });
     if (!res.ok) throw new Error(`erro ao buscar config: ${res.status}`);
     return res.json();
   },
 
-  // POST /api/v1/controle — salva threshold/alerta
+  // POST /api/v1/config — salva threshold/alerta
   async postConfig(threshold, alertEnabled) {
-    const res = await fetch(`${this.baseUrl}/api/v1/controle`, {
+    const res = await fetch(`${this.baseUrl}/api/v1/config`, {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify({ bpm_threshold: threshold, alert_enabled: alertEnabled }),

@@ -33,10 +33,10 @@ class ApiService {
     return json.decode(response.body) as List<dynamic>;
   }
 
-  /// Fetches the current configuration from `GET /api/v1/controle`.
+  /// Fetches the current configuration from `GET /api/v1/config`.
   static Future<Map<String, dynamic>> getConfig() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/api/v1/controle'),
+      Uri.parse('$baseUrl/api/v1/config'),
       headers: _headers,
     );
     if (response.statusCode != 200) {
@@ -56,10 +56,10 @@ class ApiService {
     }
   }
 
-  /// Saves a new alert threshold and toggle via `POST /api/v1/controle`.
+  /// Saves a new alert threshold and toggle via `POST /api/v1/config`.
   static Future<void> postConfig(int threshold, bool alertEnabled) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/v1/controle'),
+      Uri.parse('$baseUrl/api/v1/config'),
       headers: _headers,
       body: json.encode({
         'bpm_threshold': threshold,

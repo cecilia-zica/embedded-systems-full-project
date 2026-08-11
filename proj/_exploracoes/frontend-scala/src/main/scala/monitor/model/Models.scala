@@ -3,7 +3,7 @@ package monitor.model
 import upickle.default.{ReadWriter, macroRW}
 
 // Formato exato do JSON que o backend Go devolve (ver proj/backend/logging.go
-// e controle.go). No proj/web (JS puro) e no api_service.dart, esses dados
+// e config.go). No proj/web (JS puro) e no api_service.dart, esses dados
 // ficam "soltos" — um Map<String, dynamic> no Dart, um objeto qualquer no
 // JS. Aqui a gente descreve o formato como case class: se o backend mandar
 // um campo faltando ou com tipo errado, o upickle.read() falha com um erro

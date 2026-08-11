@@ -41,7 +41,7 @@ demo, mas relevante antes de expor uma URL pública.
   *Correção:* validar faixas plausíveis (ex.: `0 < bpm < 300`).
 
 - **C3 — [Info] 4 arquivos Go não estão `gofmt`-limpos.**
-  `controle.go`, `logging.go`, `main.go`, `middleware.go` — apenas espaço após
+  `config.go`, `logging.go`, `main.go`, `middleware.go` — apenas espaço após
   `//` (`//comentário` → `// comentário`). Cosmético, mas um repo Go público é
   esperado ser `gofmt`-limpo. *Correção:* `gofmt -w proj/backend`.
 
